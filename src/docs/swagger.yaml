@@ -1,0 +1,181 @@
+openapi: 3.0.0
+info:
+  title: API de Tarefas
+  version: 1.0.0
+  description: API RESTful para gerenciamento de tarefas.
+servers:
+  - url: http://localhost:3001
+
+tags:
+  - name: Auth
+    description: Endpoints relacionados à autenticação.
+  - name: Tasks
+    description: Endpoints relacionados às tarefas.
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Registrar um novo usuário.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Nome de usuário do novo usuário.
+                password:
+                  type: string
+                  description: Senha do novo usuário.
+      responses:
+        '201':
+          description: Usuário registrado com sucesso.
+        '400':
+          description: Erro ao registrar o usuário. Verifique os dados fornecidos.
+
+  /api/auth/login:
+    post:
+      summary: Fazer login de um usuário.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Nome de usuário para login.
+                password:
+                  type: string
+                  description: Senha do usuário.
+      responses:
+        '200':
+          description: Login bem-sucedido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth:
+                    type: boolean
+                    description: Indica se o login foi bem-sucedido.
+                  token:
+                    type: string
+                    description: Token JWT gerado para autenticação.
+        '401':
+          description: Credenciais inválidas. O login falhou.
+
+  /api/tasks:
+    post:
+      summary: Criar uma nova tarefa.
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Título da nova tarefa a ser criada.
+      responses:
+        '201':
+          description: Tarefa criada com sucesso.
+        '400':
+          description: Falha ao criar a tarefa. Verifique os dados fornecidos.
+
+    get:
+      summary: Obter todas as tarefas do usuário autenticado.
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de tarefas obtida com sucesso.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          description: Não autorizado. Usuário não autenticado.
+
+  /api/tasks/{id}:
+    put:
+      summary: Atualizar uma tarefa existente.
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da tarefa a ser atualizada.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '200':
+          description: Tarefa atualizada com sucesso.
+        '404':
+          description: Tarefa não encontrada. Verifique o ID fornecido.
+        '400':
+          description: Falha ao atualizar a tarefa. Verifique os dados fornecidos.
+
+    delete:
+      summary: Deletar uma tarefa existente.
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da tarefa a ser deletada.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tarefa deletada com sucesso.
+        '404':
+          description: Tarefa não encontrada. Verifique o ID fornecido.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único da tarefa.
+        title:
+          type: string
+          description: Título da tarefa.
+        completed:
+          type: boolean
+          description: Indica se a tarefa foi concluída ou não.
